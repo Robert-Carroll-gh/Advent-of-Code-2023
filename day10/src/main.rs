@@ -4,13 +4,66 @@
 fn main() {
     let input = include_str!("input.txt");
 
-    println!("{}", part1(input))
+    println!("{}", part2(input))
+}
+
+fn part2(input: &str) -> usize {
+    let map = input.chars().collect::<Vec<char>>();
+    let start = input.chars().position(|x| x == 'S').unwrap();
+    let width = input.chars().position(|x| x == '\n').unwrap() + 1;
+
+    let mut walker = Walker {
+        pos: start,
+
+        //Requires manually checking direction for now because I didn't feel like checking for that
+        //properly
+        direction: Direction::East,
+    };
+
+    let mut path: Vec<usize> = Vec::new();
+    path.push(start);
+
+    walker.step(&map, width);
+    while walker.pos != start {
+        path.push(walker.pos);
+        walker.step(&map, width);
+    }
+
+    let mut in_polygon = false;
+    (0..map.len()).fold(0, |acc, i| {
+        if !path.contains(&i) {
+            if in_polygon {
+                return acc + 1;
+            };
+        } else {
+            if let 'L' | '|' | 'J' = &map[i] {
+                in_polygon = !in_polygon;
+            }
+        }
+        return acc;
+    })
+}
+
+#[test]
+fn part2test1() {
+    assert_eq!(part2(include_str!("p2t1.txt")), 4);
+}
+
+#[test]
+fn part2test2() {
+    assert_eq!(part2(include_str!("p2t2.txt")), 8);
+}
+
+#[test]
+fn part2test3() {
+    assert_eq!(part2(include_str!("p2t3.txt")), 10);
 }
 
 struct Walker {
     pos: usize,
     direction: Direction,
 }
+
 impl Walker {
     fn step(&mut self, map: &Vec<char>, width: usize) -> char {
         self.pos = match self.direction {
@@ -33,7 +86,6 @@ impl Walker {
         tiles.insert('\n', None);
 
         let tile = map[self.pos];
-
         let opens = tiles.get(&tile).unwrap();
 
         if opens.is_none() {
